@@ -73,20 +73,21 @@ if __name__ == "__main__":
 
                 while index < len(STRIPPED_LINE):
                     if STRIPPED_LINE.startswith("**", index):
-                        if decoration_stack[-1] == "**":
-                            decoration_stack.pop()
-                            HTML_OUTPUT_FILE.write("</b>")
-                        else:
+
+                        if decoration_stack == [] or decoration_stack[-1] != "**":
                             decoration_stack.append("**")
                             HTML_OUTPUT_FILE.write("<b>")
+                        else:
+                            decoration_stack.pop()
+                            HTML_OUTPUT_FILE.write("</b>")
                         index += 2
                     elif STRIPPED_LINE.startswith("__", index):
-                        if decoration_stack[-1] == "__":
-                            decoration_stack.pop()
-                            HTML_OUTPUT_FILE.write("</em>")
-                        else:
+                        if decoration_stack == [] or decoration_stack[-1] != "__":
                             decoration_stack.append("__")
                             HTML_OUTPUT_FILE.write("<em>")
+                        else:
+                            decoration_stack.pop()
+                            HTML_OUTPUT_FILE.write("</em>")
                         index += 2
                     else:
                         HTML_OUTPUT_FILE.write(STRIPPED_LINE[index])
