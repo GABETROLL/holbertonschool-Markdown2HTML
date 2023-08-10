@@ -1,3 +1,8 @@
+"""
+Converts markdown to HTML.
+
+Usage: ./markdown2html.py <MD input file> <HTML output file>
+"""
 from sys import argv, stderr, exit
 
 if __name__ == "__main__":
