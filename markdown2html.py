@@ -28,8 +28,10 @@ if __name__ == "__main__":
     for line in MD_INPUT_FILE:
         for hashtag_amount in range(1, 6 + 1):
             HEADING_LINE_START = "#" * hashtag_amount + " "
+
             if line.startswith(HEADING_LINE_START):
-                REST_OF_LINE = line[hashtag_amount + 1:]
+
+                REST_OF_LINE = line[hashtag_amount + 1:].strip()
                 HTML_OUTPUT_FILE.write(f"<h{hashtag_amount}>{REST_OF_LINE}</h{hashtag_amount}>")
 
     exit(0)
