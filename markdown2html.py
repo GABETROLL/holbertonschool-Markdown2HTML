@@ -55,16 +55,28 @@ if __name__ == "__main__":
 
                         HTML_OUTPUT_FILE.write("<li>" + line[len(list_line_start):].strip() + "</li>\n")
 
+                        # move on to next line HERE
                         try:
                             line = next(MD_INPUT_FILE_ITER)
                         except StopIteration:
                             break
 
                     HTML_OUTPUT_FILE.write(f"</{list_tag}>\n")
-        elif line.strip() == "":
-            # a line full of just whitespace should be ignored
-            continue
-        else:
-            HTML_OUTPUT_FILE.write(f"<p>{line.strip()}</p>\n")
+        elif line.strip():
+            HTML_OUTPUT_FILE.write("<p>")
+
+            while line.strip():
+                HTML_OUTPUT_FILE.write(line.strip())
+
+                # move on to next line HERE
+                try:
+                    line = next(MD_INPUT_FILE_ITER)
+                except StopIteration:
+                    break
+
+                if line.strip():
+                    HTML_OUTPUT_FILE.write("<br>")
+
+            HTML_OUTPUT_FILE.write("</p>\n")
 
     exit(0)
