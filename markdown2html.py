@@ -7,14 +7,16 @@ Usage: ./markdown2html.py <MD input file> <HTML output file>
 from sys import argv, stderr, exit
 
 
-def decorated_line(line: str):
+def decorated_line(line: str, inside_header: bool = False):
     """
     Returns a new string like line,
     but with its mardown decorations ("**...**", "__...__")
     as their corresponding HTML tags (<b>...</b>, <em></em>)
 
     Using a stack, to allow for nested decorations.
-    
+
+    If 'inside_header' is True, the 'em's will be 'b's instead.
+
     INVALID OPENING AND CLOSING DECORATIONS BREAK THIS FUNCTION!!
     """
     decoration_stack = []
@@ -22,8 +24,10 @@ def decorated_line(line: str):
 
     result = ""
 
+    MD_TO_HTML_DECORATIONS = {"**": "b", "__": "em" if not inside_header else "b"}
+
     while input_index < len(line):
-        for md, html in {"**": "b", "__": "em"}.items():
+        for md, html in MD_TO_HTML_DECORATIONS.items():
             if line.startswith(md, input_index):
                 if decoration_stack == [] or decoration_stack[-1] != md:
                     decoration_stack.append(md)
@@ -78,7 +82,8 @@ if __name__ == "__main__":
                 if line.startswith(HEADING_LINE_START):
 
                     REST_OF_LINE = line[hashtag_amount + 1:].strip()
-                    DECORATED_LINE = decorated_line(REST_OF_LINE)
+                    DECORATED_LINE = decorated_line(REST_OF_LINE, inside_header=True)
+                    #        ("__...__" used inside of a MD heading ^ should output bold in HTML)
                     HTML_OUTPUT_FILE.write(f"<h{hashtag_amount}>{DECORATED_LINE}</h{hashtag_amount}>")
 
                     previous_line_type = "h"

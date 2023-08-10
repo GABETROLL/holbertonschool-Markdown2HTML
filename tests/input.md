@@ -1,4 +1,7 @@
 # Welcome __to__ Holberton
+# Welcome **to** Holberton
+# Welcome _to_ Holberton
+# Welcome *to* Holberton
 
 Nice school!
 
