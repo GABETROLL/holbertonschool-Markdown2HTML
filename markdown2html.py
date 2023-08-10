@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """
 Converts markdown to HTML.
 
