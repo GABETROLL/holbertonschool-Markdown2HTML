@@ -109,7 +109,7 @@ if __name__ == "__main__":
                     REST_OF_LINE = line[len(list_line_start):]
                     DECORATED_REST_OF_LINE = decorated_line(REST_OF_LINE)
 
-                    HTML_OUTPUT_FILE.write(f"</li>{DECORATED_REST_OF_LINE.strip()}</li>")
+                    HTML_OUTPUT_FILE.write(f"<li>{DECORATED_REST_OF_LINE.strip()}</li>")
                     previous_line_type = list_tag
                     break
         elif line.strip():
