@@ -36,28 +36,27 @@ if __name__ == "__main__":
 
                 REST_OF_LINE = line[hashtag_amount + 1:].strip()
                 HTML_OUTPUT_FILE.write(f"<h{hashtag_amount}>{REST_OF_LINE}</h{hashtag_amount}>\n")
+        
+        for list_line_start, list_tag in {"- ": "ul", "* ": "ol"}.items():
+            if line.startswith(list_line_start):
 
-        UL_LINE_START = "- "
+                # Write the opening 'list_tag', then
+                # continue to iterate through the next 'line's
+                # Using next(MD_INPUT_FILE_ITER),
+                # until the lines beginning with 'list_line_start' are over,
+                # and we can then write the closing 'list_tag', then a new line.
 
-        if line.startswith(UL_LINE_START):
+                HTML_OUTPUT_FILE.write(f"<{list_tag}>\n")
 
-            # Write "<ul>", then
-            # continue to iterate through the next 'line's
-            # Using next(MD_INPUT_FILE_ITER),
-            # until the lines beginning with 'UL_LINE_START' are over,
-            # and we can then write "</ul>\n"
+                while line.startswith(list_line_start):
 
-            HTML_OUTPUT_FILE.write("<ul>\n")
+                    HTML_OUTPUT_FILE.write("<li>" + line[len(list_line_start):].strip() + "</li>\n")
 
-            while line.startswith(UL_LINE_START):
-                
-                HTML_OUTPUT_FILE.write("<li>" + line[len(UL_LINE_START):].strip() + "</li>\n")
+                    try:
+                        line = next(MD_INPUT_FILE_ITER)
+                    except StopIteration:
+                        break
 
-                try:
-                    line = next(MD_INPUT_FILE_ITER)
-                except StopIteration:
-                    break
-
-            HTML_OUTPUT_FILE.write("</ul>\n")
+                HTML_OUTPUT_FILE.write(f"</{list_tag}>\n")
 
     exit(0)
