@@ -19,7 +19,7 @@ if __name__ == "__main__":
     try:
         MD_INPUT_FILE = open(MD_INPUT_FILE_NAME)
     except FileNotFoundError:
-        print(f"Missing {MD_INPUT_FILE_NAME}", stderr)
+        print(f"Missing {MD_INPUT_FILE_NAME}", file=stderr)
         exit(1)
 
     HTML_OUTPUT_FILE = open(HTML_OUTPUT_FILE_NAME, "w")
