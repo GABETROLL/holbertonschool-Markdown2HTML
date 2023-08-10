@@ -7,7 +7,7 @@ Usage: ./markdown2html.py <MD input file> <HTML output file>
 from sys import argv, stderr, exit
 
 
-def decorate_line(line: str, html_output_file):
+def decorated_line(line: str):
     """
     Returns a new string like line,
     but with its mardown decorations ("**...**", "__...__")
@@ -18,23 +18,26 @@ def decorate_line(line: str, html_output_file):
     INVALID OPENING AND CLOSING DECORATIONS BREAK THIS FUNCTION!!
     """
     decoration_stack = []
-    index = 0
+    input_index = 0
 
-    result = line
+    result = ""
 
-    while index < len(line):
+    while input_index < len(line):
         for md, html in {"**": "b", "__": "em"}.items():
-            if line.startswith(md, index):
+            if line.startswith(md, input_index):
                 if decoration_stack == [] or decoration_stack[-1] != md:
                     decoration_stack.append(md)
-                    result = result[:index] + f"<{html}>" + result[index + len(md):]
+                    result += f"<{html}>"
                 else:
                     decoration_stack.pop()
-                    result = result[:index] + f"</{html}>" + result[index + len(md):]
-                index += 2
+                    result += f"</{html}>"
+                input_index += 2
                 break
         else:
-            index += 1
+            result += line[input_index]
+            input_index += 1
+
+    return result
 
 
 if __name__ == "__main__":
@@ -55,19 +58,17 @@ if __name__ == "__main__":
 
     HTML_OUTPUT_FILE = open(HTML_OUTPUT_FILE_NAME, "w")
 
-    MD_INPUT_FILE_ITER = iter(MD_INPUT_FILE)
-
     previous_line_type: str = ""
 
-    for line in MD_INPUT_FILE_ITER:
+    for line in MD_INPUT_FILE:
 
         # Close opened tags, if any
         if previous_line_type == "p" and not line[:-1]:
-            HTML_OUTPUT_FILE.write("</p>\n")
+            HTML_OUTPUT_FILE.write("</p>")
         elif previous_line_type == "ul" and not line.startswith("- "):
-            HTML_OUTPUT_FILE.write("</ul>\n")
+            HTML_OUTPUT_FILE.write("</ul>")
         elif previous_line_type == "ol" and not line.startswith("* "):
-            HTML_OUTPUT_FILE.write("</ol>\n")
+            HTML_OUTPUT_FILE.write("</ol>")
 
         if line.startswith("#"):
 
@@ -77,7 +78,8 @@ if __name__ == "__main__":
                 if line.startswith(HEADING_LINE_START):
 
                     REST_OF_LINE = line[hashtag_amount + 1:].strip()
-                    HTML_OUTPUT_FILE.write(f"<h{hashtag_amount}>{REST_OF_LINE}</h{hashtag_amount}>\n")
+                    DECORATED_LINE = decorated_line(REST_OF_LINE)
+                    HTML_OUTPUT_FILE.write(f"<h{hashtag_amount}>{DECORATED_LINE}</h{hashtag_amount}>")
 
                     previous_line_type = "h"
                     break
@@ -87,7 +89,8 @@ if __name__ == "__main__":
                 else:
                     HTML_OUTPUT_FILE.write("<p>")
 
-                HTML_OUTPUT_FILE.write(line.strip())
+                DECORATED_LINE = decorated_line(REST_OF_LINE)
+                HTML_OUTPUT_FILE.write(DECORATED_LINE)
                 previous_line_type = "p"
 
         elif line.startswith("- ") or line.startswith("* "):
@@ -96,16 +99,32 @@ if __name__ == "__main__":
                 if line.startswith(list_line_start):
 
                     if previous_line_type != list_tag:
-                        HTML_OUTPUT_FILE.write(f"<{list_tag}>\n{line.strip()}")
+                        HTML_OUTPUT_FILE.write(f"<{list_tag}>")
+                    
+                    REST_OF_LINE = line[len(list_line_start):]
+                    DECORATED_REST_OF_LINE = decorated_line(REST_OF_LINE)
 
+                    HTML_OUTPUT_FILE.write(f"</li>{DECORATED_REST_OF_LINE.strip()}</li>")
                     previous_line_type = list_tag
-        elif line[:-1]:
+                    break
+        elif line.strip():
             if previous_line_type == "p":
                 HTML_OUTPUT_FILE.write("<br>")
             else:
                 HTML_OUTPUT_FILE.write("<p>")
 
-            HTML_OUTPUT_FILE.write(line.strip())
+            DECORATED_LINE = decorated_line(line)
+            HTML_OUTPUT_FILE.write(DECORATED_LINE)
             previous_line_type = "p"
+        else:
+            previous_line_type = ""
+
+    # Close opened tags, if any
+    if previous_line_type == "p":
+        HTML_OUTPUT_FILE.write("</p>\n")
+    elif previous_line_type == "ul":
+        HTML_OUTPUT_FILE.write("</ul>\n")
+    elif previous_line_type == "ol":
+        HTML_OUTPUT_FILE.write("</ol>\n")
 
     exit(0)
