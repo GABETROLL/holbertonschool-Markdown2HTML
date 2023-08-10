@@ -7,6 +7,8 @@ Usage: ./markdown2html.py <MD input file> <HTML output file>
 from sys import argv, stderr, exit
 
 if __name__ == "__main__":
+    assert argv
+
     if len(argv) < 3:
         print(f"Usage: {argv[0]} README.md README.html", file=stderr)
         exit(1)
