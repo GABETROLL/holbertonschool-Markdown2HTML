@@ -61,6 +61,9 @@ if __name__ == "__main__":
                             break
 
                     HTML_OUTPUT_FILE.write(f"</{list_tag}>\n")
+        elif line.strip() == "":
+            # a line full of just whitespace should be ignored
+            continue
         else:
             HTML_OUTPUT_FILE.write(f"<p>{line.strip()}</p>\n")
 
