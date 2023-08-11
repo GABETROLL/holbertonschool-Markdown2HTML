@@ -5,41 +5,73 @@ Converts markdown to HTML.
 Usage: ./markdown2html.py <MD input file> <HTML output file>
 """
 from sys import argv, stderr, exit
+from hashlib import md5
 
 
-def decorated_line(line: str, inside_header: bool = False):
+def decorated_line(line: str, inside_header: bool = False, start_line_index: int = 0):
     """
     Returns a new string like line,
     but with its mardown decorations ("**...**", "__...__")
     as their corresponding HTML tags (<b>...</b>, <em></em>)
+    and these markdown decorations: "[[...]]", "((...))"
+    as the MD5 of the content and the content without 'c's (case-sensitive)
 
-    Using a stack, to allow for nested decorations.
+    'inside_header' indicates if the line is part of a header,
+    so that <em>'s can instead be <b>'s.
 
-    If 'inside_header' is True, the 'em's will be 'b's instead.
-
-    INVALID OPENING AND CLOSING DECORATIONS BREAK THIS FUNCTION!!
+    'start_line_index' is the start of the line that needs to be processed,
+    used for recursion.
     """
-    decoration_stack = []
-    input_index = 0
 
-    result = ""
+    result: str = ""
+    line_index: int = start_line_index
 
-    MD_TO_HTML_DECORATIONS = {"**": "b", "__": "em" if not inside_header else "b"}
+    bold_opened: bool = False
+    em_opened: bool = False
 
-    while input_index < len(line):
-        for md, html in MD_TO_HTML_DECORATIONS.items():
-            if line.startswith(md, input_index):
-                if decoration_stack == [] or decoration_stack[-1] != md:
-                    decoration_stack.append(md)
-                    result += f"<{html}>"
-                else:
-                    decoration_stack.pop()
-                    result += f"</{html}>"
-                input_index += 2
-                break
+    decoration_stack: list[str] = []
+
+    while line_index < len(line):
+        if line.startswith("((", line_index):
+            inner_result: str = decorated_line(line, inside_header=inside_header, start_line_index=line_index + 2)
+            line_index += len(inner_result) + 2
+            result += inner_result
+
+        elif line.startswith("))", line_index):
+            return result.replace("c", "")
+
+        elif line.startswith("[[", line_index):
+            inner_result: str = decorated_line(line, inside_header=inside_header, start_line_index=line_index + 2)
+            line_index += len(inner_result) + 2
+            result += inner_result
+
+        elif line.startswith("]]", line_index):
+            return md5(result)
+
+        elif line.startswith("**", line_index):
+            if bold_opened:
+                result += "</b>"
+            else:
+                result += "<b>"
+
+            bold_opened = not bold_opened
+
+            line_index += 2
+        
+        elif line.startswith("__", line_index):
+            EM_TAG = "em" if not inside_header else "b"
+            if em_opened:
+                result += f"</{EM_TAG}>"
+            else:
+                result += f"<{EM_TAG}>"
+
+            em_opened = not em_opened
+
+            line_index += 2
+        
         else:
-            result += line[input_index]
-            input_index += 1
+            result += line[line_index]
+            line_index += 1
 
     return result
 
