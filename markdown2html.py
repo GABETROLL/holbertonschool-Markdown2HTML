@@ -8,7 +8,7 @@ from sys import argv, stderr, exit
 from hashlib import md5
 
 
-def decorated_line(line: str, inside_header: bool = False, start_line_index: int = 0):
+def decorated_line(line: str, inside_header: bool = False, start_line_index: int = 0) -> str:
     """
     Returns a new string like line,
     but with its mardown decorations ("**...**", "__...__")
@@ -29,8 +29,6 @@ def decorated_line(line: str, inside_header: bool = False, start_line_index: int
     bold_opened: bool = False
     em_opened: bool = False
 
-    decoration_stack: list[str] = []
-
     while line_index < len(line):
         if line.startswith("((", line_index):
             inner_result: str = decorated_line(line, inside_header=inside_header, start_line_index=line_index + 2)
@@ -46,7 +44,7 @@ def decorated_line(line: str, inside_header: bool = False, start_line_index: int
             result += inner_result
 
         elif line.startswith("]]", line_index):
-            return md5(result)
+            return md5(result.encode()).hexdigest()
 
         elif line.startswith("**", line_index):
             if bold_opened:
