@@ -63,7 +63,7 @@ def decorated_line(line: str, inside_header: bool = False) -> str:
             if not syntax_tree_stack or syntax_tree_stack[-1][0] != "((":
                 raise_too_many_closing_decoration_error("))")
 
-            c_less_line_segment: str = syntax_tree_stack.pop()[1].replace("c", "")
+            c_less_line_segment: str = syntax_tree_stack.pop()[1].replace("C", "").replace("c", "")
 
             if not syntax_tree_stack:
                 raise_too_many_closing_decoration_error("))")
