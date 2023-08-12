@@ -8,7 +8,7 @@ from sys import argv, stderr, exit
 from hashlib import md5
 
 
-def decorated_line(line: str, inside_header: bool = False, start_line_index: int = 0) -> str:
+def decorated_line(line: str, inside_header: bool = False) -> str:
     """
     Returns a new string like line,
     but with its mardown decorations ("**...**", "__...__")
@@ -18,60 +18,117 @@ def decorated_line(line: str, inside_header: bool = False, start_line_index: int
 
     'inside_header' indicates if the line is part of a header,
     so that <em>'s can instead be <b>'s.
-
-    'start_line_index' is the start of the line that needs to be processed,
-    used for recursion.
     """
 
-    result: str = ""
-    line_index: int = start_line_index
+    syntax_tree_stack: list[list[str, str]] = [["", ""]]
+    """
+    A list of lists of the opening bracket type and the contents inside it.
+    0th item is where the final result should end up in, and it has no opening bracket.
 
-    bold_opened: bool = False
-    em_opened: bool = False
+    Good for finding missmatching bracket errors.
+    """
+
+    # concatenate every character in the line to the string in the top
+    # (in-most) level of the 'syntax_tree_stack_', if the character is normal.
+
+    # ...But if it's an opening bracket, create a new level of the stack with the opening
+    # bracket (to remember it when we find its closing bracket, so that we can validate
+    # where each bracket opens, and where they close, and if there are missmatched brackets)
+    # and "", which will be the new top (in-most) string
+
+    # ...And if it's a closing bracket, check if it closes the top level string.
+    # If it doesn't, or if there is nothing in the 'syntax_tree_stack', raise a SyntaxError.
+    # If it does, pop the list of the bracket and string enclosed by the brackets off the
+    # 'syntax_tree_stack', modify the text according to this function's docstring,
+    # and concatenate the decorated content into the previous level of 'syntax_tree_stack'.
+    # If there is no lower (outer) level in the 'syntax_tree_stack', there is an unmatched closing bracket,
+    # and we need to raise SyntaxError.
+
+    line_index: int = 0
+
+    def raise_too_many_closing_decoration_error(decoration: str):
+        raise SyntaxError(f'\n\tIn index {line_index}:\n\tToo many "{decoration}"!\n\t{syntax_tree_stack = }')
 
     while line_index < len(line):
+
+        # print(line[line_index])
+
         if line.startswith("((", line_index):
-            inner_result: str = decorated_line(line, inside_header=inside_header, start_line_index=line_index + 2)
-            line_index += len(inner_result) + 2
-            result += inner_result
+            syntax_tree_stack.append(["((", ""])
+
+            line_index += 2
 
         elif line.startswith("))", line_index):
-            return result.replace("c", "")
+
+            if not syntax_tree_stack or syntax_tree_stack[-1][0] != "((":
+                raise_too_many_closing_decoration_error("))")
+
+            c_less_line_segment: str = syntax_tree_stack.pop()[1].replace("c", "")
+
+            if not syntax_tree_stack:
+                raise_too_many_closing_decoration_error("))")
+
+            syntax_tree_stack[-1][1] += c_less_line_segment
+
+            line_index += 2
 
         elif line.startswith("[[", line_index):
-            inner_result: str = decorated_line(line, inside_header=inside_header, start_line_index=line_index + 2)
-            line_index += len(inner_result) + 2
-            result += inner_result
+            syntax_tree_stack.append(["[[", ""])
+
+            line_index += 2
 
         elif line.startswith("]]", line_index):
-            return md5(result.encode()).hexdigest()
+            if not syntax_tree_stack or syntax_tree_stack[-1][0] != "[[":
+                raise_too_many_closing_decoration_error("]]")
+
+            md5_line_segment: str = md5(syntax_tree_stack.pop()[1].encode()).hexdigest()
+
+            if not syntax_tree_stack:
+                raise_too_many_closing_decoration_error("]]")
+
+            syntax_tree_stack[-1][1] += md5_line_segment
+
+            line_index += 2
 
         elif line.startswith("**", line_index):
-            if bold_opened:
-                result += "</b>"
+            if not syntax_tree_stack or syntax_tree_stack[-1][0] != "**":
+                syntax_tree_stack.append(["**", ""])
             else:
-                result += "<b>"
+                bold_line_segment: str = f"<b>{syntax_tree_stack.pop()[1]}</b>"
 
-            bold_opened = not bold_opened
+                if not syntax_tree_stack:
+                    raise_too_many_closing_decoration_error("**")
+                syntax_tree_stack[-1][1] += bold_line_segment
 
             line_index += 2
         
         elif line.startswith("__", line_index):
-            EM_TAG = "em" if not inside_header else "b"
-            if em_opened:
-                result += f"</{EM_TAG}>"
+            if not syntax_tree_stack or syntax_tree_stack[-1][0] != "__":
+                syntax_tree_stack.append(["__", ""])
             else:
-                result += f"<{EM_TAG}>"
+                TAG_NAME = "em" if not inside_header else "b"
 
-            em_opened = not em_opened
+                bold_line_segment: str = f"<{TAG_NAME}>{syntax_tree_stack.pop()[1]}</{TAG_NAME}>"
+
+                if not syntax_tree_stack:
+                    raise_too_many_closing_decoration_error("__")
+                syntax_tree_stack[-1][1] += bold_line_segment
 
             line_index += 2
-        
+
         else:
-            result += line[line_index]
+            syntax_tree_stack[-1][1] += line[line_index]
+
             line_index += 1
 
-    return result
+    if len(syntax_tree_stack) > 1:
+        raise SyntaxError("Opened decorations weren't closed!")
+    elif len(syntax_tree_stack) < 1:
+        raise SyntaxError("Too many closing decorations!")
+
+    assert syntax_tree_stack[0][0] == ""
+
+    return syntax_tree_stack[0][1]
 
 
 if __name__ == "__main__":
