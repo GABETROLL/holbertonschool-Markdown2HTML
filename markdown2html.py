@@ -107,7 +107,7 @@ def decorated_line(line: str, inside_header: bool = False) -> str:
             if not syntax_tree_stack or syntax_tree_stack[-1][0] != "__":
                 syntax_tree_stack.append(["__", ""])
             else:
-                TAG_NAME = "em" if not inside_header else "b"
+                TAG_NAME = "em"  # if not inside_header else "b"
 
                 bold_line_segment: str = f"<{TAG_NAME}>{syntax_tree_stack.pop()[1]}</{TAG_NAME}>"
 
