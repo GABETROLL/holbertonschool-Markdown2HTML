@@ -6,6 +6,7 @@ Usage: ./markdown2html.py <MD input file> <HTML output file>
 """
 from sys import argv, stderr, exit
 from hashlib import md5
+from typing import List
 
 
 def decorated_line(line: str, inside_header: bool = False) -> str:
@@ -20,7 +21,7 @@ def decorated_line(line: str, inside_header: bool = False) -> str:
     so that <em>'s can instead be <b>'s.
     """
 
-    syntax_tree_stack: list[list[str, str]] = [["", ""]]
+    syntax_tree_stack: List[List[str, str]] = [["", ""]]
     """
     A list of lists of the opening bracket type and the contents inside it.
     0th item is where the final result should end up in, and it has no opening bracket.
@@ -47,7 +48,7 @@ def decorated_line(line: str, inside_header: bool = False) -> str:
     line_index: int = 0
 
     def raise_too_many_closing_decoration_error(decoration: str):
-        raise SyntaxError(f'\n\tIn index {line_index}:\n\tToo many "{decoration}"!\n\t{syntax_tree_stack = }')
+        raise SyntaxError(f'\n\tIn index {line_index}:\n\tToo many "{decoration}"!\n\tsyntax_tree_stack={syntax_tree_stack}')
 
     while line_index < len(line):
 
